@@ -4,8 +4,7 @@ set -euo pipefail
 
 REGION="${REGION:-eu-west-1}"
 TOPIC_ARN="${TOPIC_ARN:-}"
-ALARM_PREFIX="${ALARM_PREFIX:-aws-infra-monitoring}"
-ALB_4XX_THRESHOLD="${ALB_4XX_THRESHOLD:-100}"
+ALARM_PREFIX="${ALARM_PREFIX:-Alert}"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -463,8 +462,8 @@ while read -r ROW; do
   SAFE_ALB_NAME=$(echo "$ALB_NAME" | safe_alarm_id | cut -c1-120)
 
   create_alarm "$ALARM_PREFIX-P2-$SAFE_ALB_NAME-ALB-4XX" \
-    "P2: ALB ELB 4XX count >= $ALB_4XX_THRESHOLD for 15 minutes on $ALB_NAME" \
-    "AWS/ApplicationELB" "HTTPCode_ELB_4XX_Count" "Sum" 300 3 3 "$ALB_4XX_THRESHOLD" "GreaterThanOrEqualToThreshold" \
+    "P2: ALB ELB 4XX count >= 100 for 15 minutes on $ALB_NAME" \
+    "AWS/ApplicationELB" "HTTPCode_ELB_4XX_Count" "Sum" 300 3 3 100 "GreaterThanOrEqualToThreshold" \
     Name=LoadBalancer,Value="$ALB_DIMENSION"
 
   create_alarm "$ALARM_PREFIX-P2-$SAFE_ALB_NAME-ALB-5XX" \

@@ -70,16 +70,7 @@ Run from CloudShell:
 ```bash
 REGION="eu-west-1" \
 TOPIC_ARN="arn:aws:sns:eu-west-1:123456789012:infra-alerts" \
-ALARM_PREFIX="aws-infra-monitoring" \
-bash ALARMS.sh
-```
-
-Optional ALB 4xx threshold override:
-
-```bash
-ALB_4XX_THRESHOLD=500 \
-REGION="eu-west-1" \
-TOPIC_ARN="arn:aws:sns:eu-west-1:123456789012:infra-alerts" \
+ALARM_PREFIX="Alert" \
 bash ALARMS.sh
 ```
 
