@@ -49,12 +49,6 @@ LOGO_URL="https://example.com/company-logo.png" \
 bash ALL.sh
 ```
 
-`LOGO_URL` is optional. If you use it, the dashboard renders it in this format:
-
-```markdown
-![ABS Logo](https://example.com/company-logo.png)
-```
-
 ## Create The Alarms
 
 Create or identify an SNS topic first, then use its ARN. Do not leave the example ARN as-is.
