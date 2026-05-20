@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REGION="${REGION:-eu-west-1}"
-TOPIC_ARN="${TOPIC_ARN:-arn:aws:sns:eu-west-1:334361471548:EDB-AWS-Infra-Alerts}"
+TOPIC_ARN="${TOPIC_ARN:-}"
 ALARM_PREFIX="${ALARM_PREFIX:-aws-infra-monitoring}"
 ALB_4XX_THRESHOLD="${ALB_4XX_THRESHOLD:-100}"
 

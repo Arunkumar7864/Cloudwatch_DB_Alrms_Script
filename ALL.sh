@@ -80,7 +80,7 @@ while read -r ROW; do
 
   EC2_CPU_METRICS="$EC2_CPU_METRICS [\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"$INSTANCE_ID\",{\"label\":$(json_escape "$LABEL"),\"color\":\"$COLOR\"}],"
   EC2_STATUS_METRICS="$EC2_STATUS_METRICS [\"AWS/EC2\",\"StatusCheckFailed\",\"InstanceId\",\"$INSTANCE_ID\",{\"label\":$(json_escape "$LABEL"),\"color\":\"$COLOR\"}],"
-  EC2_NETWORK_METRICS="$EC2_NETWORK_METRICS [\"AWS/EC2\",\"NetworkIn\",\"InstanceId\",\"$INSTANCE_ID\",{\"label\":$(json_escape "$LABEL NetworkIn"),\"color\":\"$COLOR\"}],[\".\",\"NetworkOut\",\".\",\"$INSTANCE_ID\",{\"label\":$(json_escape "$LABEL NetworkOut"),\"color\":\"$NETWORK_OUT_COLOR\"}],"
+  EC2_NETWORK_METRICS="$EC2_NETWORK_METRICS [\"AWS/EC2\",\"NetworkIn\",\"InstanceId\",\"$INSTANCE_ID\",{\"label\":$(json_escape "$LABEL NetworkIn"),\"color\":\"$COLOR\"}],[\".\",\"NetworkOut\",\".\",\".\",{\"label\":$(json_escape "$LABEL NetworkOut"),\"color\":\"$NETWORK_OUT_COLOR\"}],"
   EC2_INDEX=$((EC2_INDEX + 1))
 done < <(echo "$INSTANCES_JSON" | jq -c '.[]')
 
@@ -650,7 +650,7 @@ while read -r ROW; do
   TARGET_GROUP_LB_DIMENSION=$(echo "$ROW" | jq -r '.LoadBalancerDimension')
   COLOR=$(color_at "$TG_INDEX")
 
-  ALB_HEALTHY_HOST_METRICS="$ALB_HEALTHY_HOST_METRICS [\"AWS/ApplicationELB\",\"HealthyHostCount\",\"TargetGroup\",\"$TARGET_GROUP_DIMENSION\",\"LoadBalancer\",\"$TARGET_GROUP_LB_DIMENSION\",{\"label\":$(json_escape "$TARGET_GROUP_NAME Healthy"),\"color\":\"$COLOR\"}],"
+  ALB_HEALTHY_HOST_METRICS="$ALB_HEALTHY_HOST_METRICS [\"AWS/ApplicationELB\",\"HealthyHostCount\",\"TargetGroup\",\"$TARGET_GROUP_DIMENSION\",\"LoadBalancer\",\"$TARGET_GROUP_LB_DIMENSION\",{\"label\":$(json_escape "$TARGET_GROUP_NAME Healthy"),\"color\":\"#2ca02c\"}],"
   ALB_UNHEALTHY_HOST_METRICS="$ALB_UNHEALTHY_HOST_METRICS [\"AWS/ApplicationELB\",\"UnHealthyHostCount\",\"TargetGroup\",\"$TARGET_GROUP_DIMENSION\",\"LoadBalancer\",\"$TARGET_GROUP_LB_DIMENSION\",{\"label\":$(json_escape "$TARGET_GROUP_NAME Unhealthy"),\"color\":\"$COLOR\"}],"
   TG_INDEX=$((TG_INDEX + 1))
 done < <(echo "$TARGET_GROUPS_JSON" | jq -c '.[]')
@@ -776,7 +776,7 @@ EOF
 
 append_logs_placeholder() {
   append_widget "$(cat <<EOF
-    { "type": "text", "x": 0, "y": $NEXT_Y, "width": 24, "height": 3, "properties": { "markdown": "## Customer Logs\\n\\nReserved area for customer-specific CloudWatch Logs Insights widgets. Add log group widgets here." } }
+    { "type": "text", "x": 0, "y": $NEXT_Y, "width": 24, "height": 3, "properties": { "markdown": "## Customer Logs\\n\\nReserved area for customer-specific CloudWatch Logs Insights widgets. Add log group and query widgets here in the console, then add them to this script if the dashboard is rerun." } }
 EOF
 )"
   NEXT_Y=$((NEXT_Y + 3))
@@ -990,7 +990,7 @@ if [ "$EKS_CLUSTER_COUNT" -gt 0 ]; then
   append_metric_widget 8 "$NEXT_Y" 8 6 "EKS Node CPU Utilization" "$(metric_array "$EKS_CPU_METRICS")" "Average" "gauge" "$CPU_ANNOTATIONS,$UTILIZATION_AXIS"
   append_metric_widget 16 "$NEXT_Y" 8 6 "EKS Node Memory Utilization" "$(metric_array "$EKS_MEMORY_METRICS")" "Average" "gauge" "$MEMORY_DISK_ANNOTATIONS,$UTILIZATION_AXIS"
   NEXT_Y=$((NEXT_Y + 6))
-  append_two_metric_widgets "EKS Node Filesystem Utilization" "$(metric_array "$EKS_FILESYSTEM_METRICS")" "Average" "gauge" "$MEMORY_DISK_ANNOTATIONS,$UTILIZATION_AXIS" "EKS Running Pods" "$(metric_array "$EKS_POD_METRICS")" "Average" "timeSeries" ""
+  append_two_metric_widgets "EKS Node Filesystem Utilization" "$(metric_array "$EKS_FILESYSTEM_METRICS")" "Average" "gauge" "$MEMORY_DISK_ANNOTATIONS,$UTILIZATION_AXIS" "EKS Running Pods" "$(metric_array "$EKS_POD_METRICS")" "Average" "bar" ""
 else
   echo "Skipping EKS widgets because no EKS clusters were found."
 fi
@@ -1031,7 +1031,7 @@ fi
 if [ "$RDS_DB_COUNT" -gt 0 ]; then
   echo "Adding RDS widgets..."
   append_section_header "RDS Databases" "🟢"
-  append_two_metric_widgets "RDS CPU Utilization" "$(metric_array "$RDS_CPU_METRICS")" "Average" "gauge" "$CPU_ANNOTATIONS,$UTILIZATION_AXIS" "RDS Free Storage" "$(metric_array "$RDS_STORAGE_METRICS")" "Average" "timeSeries" ""
+  append_two_metric_widgets "RDS CPU Utilization" "$(metric_array "$RDS_CPU_METRICS")" "Average" "gauge" "$CPU_ANNOTATIONS,$UTILIZATION_AXIS" "RDS Free Storage" "$(metric_array "$RDS_STORAGE_METRICS")" "Average" "singleValue" ""
   append_two_metric_widgets "RDS Read / Write Latency" "$(metric_array "$RDS_LATENCY_METRICS")" "Average" "timeSeries" "" "RDS Connections" "$(metric_array "$RDS_CONN_METRICS")" "Average" "timeSeries" ""
 else
   echo "Skipping RDS widgets because no RDS DB instances were found."
