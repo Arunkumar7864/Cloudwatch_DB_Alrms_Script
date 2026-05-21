@@ -70,6 +70,35 @@ text_items() {
   tr '\t ' '\n\n' | jq -R -c 'select(length > 0)'
 }
 
+delete_obsolete_linux_disk_alarms() {
+  aws cloudwatch describe-alarms \
+    --region "$REGION" \
+    --alarm-name-prefix "$ALARM_PREFIX" \
+    --query "MetricAlarms[]" \
+    --output json | jq -r '
+    def dim($name): (.Dimensions | map(select(.Name == $name).Value) | first) // "";
+    def lower_dim($name): (dim($name) | ascii_downcase);
+    def obsolete_linux_disk_alarm:
+      .Namespace == "CWAgent"
+      and .MetricName == "disk_used_percent"
+      and (
+        lower_dim("fstype") == "squashfs"
+        or (lower_dim("device") | startswith("loop"))
+        or (lower_dim("path") | startswith("/snap/"))
+      );
+
+    .[] |
+    select(obsolete_linux_disk_alarm) |
+    .AlarmName
+  ' | while read -r ALARM_NAME; do
+    [ -z "$ALARM_NAME" ] && continue
+    echo "Deleting obsolete snap/loop disk alarm: $ALARM_NAME"
+    aws cloudwatch delete-alarms \
+      --region "$REGION" \
+      --alarm-names "$ALARM_NAME"
+  done
+}
+
 preferred_instance_metric_dimensions() {
   local instance_id="$1"
   local image_id="$2"
@@ -327,6 +356,7 @@ while read -r ROW; do
 done < <(echo "$RUNNING_INSTANCES_JSON" | jq -c '.[]')
 
 echo "Discovering CloudWatch Agent disk metrics..."
+delete_obsolete_linux_disk_alarms
 DISK_METRICS=$(cwagent_linux_disk_metrics)
 
 if [ "$(echo "$DISK_METRICS" | jq 'length')" -eq 0 ]; then
