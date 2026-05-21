@@ -5,6 +5,7 @@ set -euo pipefail
 REGION="${REGION:-eu-west-1}"
 TOPIC_ARN="${TOPIC_ARN:-}"
 ALARM_PREFIX="${ALARM_PREFIX:-Alert}"
+OBSOLETE_DISK_ALARM_PREFIXES="${OBSOLETE_DISK_ALARM_PREFIXES:-$ALARM_PREFIX}"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -71,11 +72,14 @@ text_items() {
 }
 
 delete_obsolete_linux_disk_alarms() {
-  aws cloudwatch describe-alarms \
-    --region "$REGION" \
-    --alarm-name-prefix "$ALARM_PREFIX" \
-    --query "MetricAlarms[]" \
-    --output json | jq -r '
+  local cleanup_prefix
+
+  for cleanup_prefix in $OBSOLETE_DISK_ALARM_PREFIXES; do
+    aws cloudwatch describe-alarms \
+      --region "$REGION" \
+      --alarm-name-prefix "$cleanup_prefix" \
+      --query "MetricAlarms[]" \
+      --output json | jq -r '
     def dim($name): (.Dimensions | map(select(.Name == $name).Value) | first) // "";
     def lower_dim($name): (dim($name) | ascii_downcase);
     def obsolete_linux_disk_alarm:
@@ -90,12 +94,13 @@ delete_obsolete_linux_disk_alarms() {
     .[] |
     select(obsolete_linux_disk_alarm) |
     .AlarmName
-  ' | while read -r ALARM_NAME; do
-    [ -z "$ALARM_NAME" ] && continue
-    echo "Deleting obsolete snap/loop disk alarm: $ALARM_NAME"
-    aws cloudwatch delete-alarms \
-      --region "$REGION" \
-      --alarm-names "$ALARM_NAME"
+    ' | while read -r ALARM_NAME; do
+      [ -z "$ALARM_NAME" ] && continue
+      echo "Deleting obsolete snap/loop disk alarm: $ALARM_NAME"
+      aws cloudwatch delete-alarms \
+        --region "$REGION" \
+        --alarm-names "$ALARM_NAME"
+    done
   done
 }
 
